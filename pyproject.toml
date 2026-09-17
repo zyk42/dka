@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dka"
+version = "0.1.0"
+description = "Domain Knowledge Annealing: build domain-expert LLMs via KG-guided QA synthesis and two-stage Local-to-Global SFT"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.0",
+    "networkx>=3.0",
+    "pandas>=2.0",
+    "pyyaml>=6.0",
+    "tqdm>=4.65",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+neo4j = ["neo4j>=5.0"]
+pdf = ["pypdf>=4.0"]
+ui = ["gradio>=4.0"]
+train = [
+    "torch>=2.1",
+    "transformers>=4.45",
+    "trl>=0.12",
+    "peft>=0.12",
+    "datasets>=2.18",
+    "accelerate>=0.30",
+    "wandb",
+]
+all = ["dka[neo4j]", "dka[pdf]", "dka[ui]", "dka[train]"]
+
+[project.scripts]
+dka-prepare = "dka.cli.prepare_corpus:main"
+dka-build-kg = "dka.cli.build_kg:main"
+dka-export-neo4j = "dka.cli.export_neo4j:main"
+dka-walk = "dka.cli.walk:main"
+dka-gen-qa = "dka.cli.gen_qa:main"
+dka-train = "dka.cli.train:main"
+dka-ui = "dka.ui.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

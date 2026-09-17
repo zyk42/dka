@@ -1,0 +1,6 @@
+Attention mechanisms have become an integral part of sequence modeling.
+The Transformer architecture, introduced in the paper "Attention is All You Need",
+relies entirely on self-attention to draw global dependencies between input and output.
+BERT builds on the Transformer encoder stack and is pre-trained with masked language
+modeling. Fine-tuning BERT achieves strong results on benchmarks such as SQuAD,
+a reading comprehension dataset from Stanford.

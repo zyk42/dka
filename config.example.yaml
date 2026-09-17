@@ -1,0 +1,46 @@
+# DKA - Domain Knowledge Annealing configuration
+
+llm:
+  # Any OpenAI-compatible endpoint (vLLM / Ollama / OpenAI / ...)
+  base_url: "http://localhost:8000/v1"
+  api_key: "dummy"                        # OPENAI_API_KEY env var overrides this
+  model: "Qwen/Qwen2.5-32B-Instruct"      # extraction + QA synthesis model
+  max_tokens: 4096
+  temperature: 0.0
+  concurrent_requests: 16                 # parallel LLM calls
+  # extra_base_urls: ["http://localhost:8001/v1"]   # load balancing across endpoints
+
+extraction:
+  # Adapt these types to your domain
+  entity_types:
+    - CONCEPT
+    - MODEL
+    - METHOD
+    - DATASET
+    - METRIC
+    - PAPER
+    - ORGANIZATION
+    - PERSON
+  max_gleanings: 0    # 0 = single LLM pass; >0 = GraphRAG-style multi-round gleaning
+
+graph:
+  min_edge_weight: 1.0          # drop edges below this cumulative weight
+  cross_chunk_multiplier: 3.0   # α: bonus weight for cross-chunk edges during walk
+
+walk:
+  num_walks: 10000              # random walk paths to generate
+  min_hops: 3
+  max_hops: 5
+  min_chunks_crossed: 2         # paths crossing fewer chunks are discarded
+  max_retries: 10               # retries if a walk dead-ends before min_hops
+  rare_start: true              # sample start nodes from rare (low-frequency) nodes
+  rare_frequency_threshold: 2   # nodes appearing in ≤ N chunks are "rare"
+
+sft:
+  checkpoint_every: 500         # save QA JSONL every N walks/chunks (resumable)
+
+output:
+  graph_path: "data/knowledge_graph.json"
+  walks_path: "data/walks.jsonl"
+  sft_inter_path: "qa_inter.jsonl"    # written under --output-dir (default: data/)
+  sft_intra_path: "qa_intra.jsonl"

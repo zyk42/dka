@@ -1,0 +1,25 @@
+# Core pipeline
+openai>=1.0
+networkx>=3.0
+pandas>=2.0
+pyyaml>=6.0
+tqdm>=4.65
+numpy>=1.24
+
+# Optional: Neo4j export
+# neo4j>=5.0
+
+# Optional: Gradio web UI
+# gradio>=4.0
+
+# Optional: PDF input for dka-prepare
+# pypdf>=4.0
+
+# Training (dka-train)
+# torch>=2.1
+# transformers>=4.45
+# trl>=0.12
+# peft>=0.12
+# datasets>=2.18
+# accelerate>=0.30
+# wandb
