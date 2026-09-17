@@ -1,17 +1,26 @@
 """
 Step 0 – Prepare a chunked corpus from raw documents.
 
-Accepts a directory (or single file) of .txt / .md / .pdf documents and
-produces the chunks JSONL consumed by `dka-build-kg`:
+Accepts a directory (or single file) containing any mix of:
+
+  - ``.txt`` / ``.md``  – plain documents, split into ~``chunk_size``-word
+                          chunks with ``chunk_overlap`` overlap.
+  - ``.jsonl``          – pre-segmented corpus, one record per line. Each line
+                          is a JSON object; the text is read from the first
+                          available of the keys: text / content / paragraph /
+                          paragraph_text / body. Optional ``id`` and ``title``
+                          keys are reused. Records longer than ``chunk_size``
+                          words are further split.
+
+PDF is NOT supported — convert documents to .md / .txt first.
+
+Output JSONL (one chunk per line) consumed by `dka-build-kg`:
 
     {"id": "...", "text": "title\\n\\nchunk text", "title": "...", "source": "..."}
 
-Documents are split into ~`chunk_size`-token chunks (whitespace tokenizer
-approximation; 1 token ≈ 1 word for English) with `chunk_overlap` overlap.
-
 Usage:
     dka-prepare --input docs/ --output data/chunks.jsonl
-    dka-prepare --input paper.pdf --output data/chunks.jsonl --chunk-size 512
+    dka-prepare --input corpus.jsonl --output data/chunks.jsonl --chunk-size 512
 """
 
 from __future__ import annotations
@@ -29,24 +38,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-SUPPORTED_SUFFIXES = {".txt", ".md", ".pdf"}
+SUPPORTED_SUFFIXES = {".txt", ".md", ".jsonl"}
 
-
-def _read_pdf(path: Path) -> str:
-    try:
-        from pypdf import PdfReader
-    except ImportError as e:
-        raise ImportError(
-            "PDF input requires the 'pypdf' package: pip install dka[pdf]"
-        ) from e
-    reader = PdfReader(str(path))
-    return "\n\n".join(page.extract_text() or "" for page in reader.pages)
-
-
-def read_document(path: Path) -> str:
-    if path.suffix.lower() == ".pdf":
-        return _read_pdf(path)
-    return path.read_text(encoding="utf-8", errors="ignore")
+# Candidate keys for locating the text inside a JSONL record
+TEXT_KEYS = ("text", "content", "paragraph", "paragraph_text", "body")
 
 
 def chunk_text(text: str, chunk_size: int = 512, chunk_overlap: int = 64) -> list[str]:
@@ -71,14 +66,82 @@ def make_id(source: str, title: str, idx: int) -> str:
     return f"{source}_{h}_{idx}"
 
 
+def _emit(text: str, title: str, source: str, chunks: list[dict],
+          chunk_size: int, chunk_overlap: int, base_id: str | None = None) -> None:
+    """Chunk one document/record and append to the corpus list."""
+    pieces = chunk_text(text, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    for i, piece in enumerate(pieces):
+        if base_id and len(pieces) == 1:
+            cid = base_id  # keep original id when the record is not split
+        else:
+            cid = make_id(source, f"{title}_{i}", len(chunks))
+            if base_id:
+                cid = f"{base_id}_{i}"
+        chunks.append({
+            "id": cid,
+            "text": f"{title}\n\n{piece}" if (i == 0 and title) else piece,
+            "title": title,
+            "source": source,
+        })
+
+
+def _process_text_file(path: Path, chunks: list[dict],
+                       chunk_size: int, chunk_overlap: int) -> int:
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    if not text.strip():
+        logger.warning("Empty document, skipped: %s", path)
+        return 0
+    before = len(chunks)
+    _emit(text, title=path.stem, source=str(path), chunks=chunks,
+          chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    return len(chunks) - before
+
+
+def _process_jsonl_file(path: Path, chunks: list[dict],
+                        chunk_size: int, chunk_overlap: int) -> int:
+    before = len(chunks)
+    skipped = 0
+    with open(path, encoding="utf-8", errors="ignore") as f:
+        for lineno, line in enumerate(f, 1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                logger.warning("%s:%d invalid JSON, skipped", path, lineno)
+                skipped += 1
+                continue
+
+            if isinstance(record, str):
+                text, title, rid = record, "", None
+            elif isinstance(record, dict):
+                text = next((str(record[k]) for k in TEXT_KEYS
+                             if record.get(k) and str(record[k]).strip()), "")
+                title = str(record.get("title") or "")
+                rid = record.get("id")
+            else:
+                skipped += 1
+                continue
+
+            if not text.strip():
+                skipped += 1
+                continue
+            _emit(text, title=title, source=str(path), chunks=chunks,
+                  chunk_size=chunk_size, chunk_overlap=chunk_overlap,
+                  base_id=str(rid) if rid else None)
+    if skipped:
+        logger.warning("%s: %d record(s) skipped (no text / invalid)", path, skipped)
+    return len(chunks) - before
+
+
 def iter_input_files(input_path: Path) -> list[Path]:
     if input_path.is_file():
         return [input_path]
-    files = sorted(
+    return sorted(
         p for p in input_path.rglob("*")
         if p.is_file() and p.suffix.lower() in SUPPORTED_SUFFIXES
     )
-    return files
 
 
 def prepare_corpus(
@@ -89,25 +152,20 @@ def prepare_corpus(
 ) -> int:
     files = iter_input_files(input_path)
     if not files:
-        raise ValueError(f"No .txt/.md/.pdf files found under {input_path}")
-    logger.info("Found %d document(s) under %s", len(files), input_path)
+        raise ValueError(
+            f"No .txt/.md/.jsonl files found under {input_path} "
+            "(PDF is not supported — convert to .md/.txt first)."
+        )
+    logger.info("Found %d file(s) under %s", len(files), input_path)
 
     chunks: list[dict] = []
     for path in files:
-        text = read_document(path)
-        if not text.strip():
-            logger.warning("Empty document, skipped: %s", path)
-            continue
-        title = path.stem
-        pieces = chunk_text(text, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-        for i, piece in enumerate(pieces):
-            chunks.append({
-                "id": make_id("doc", f"{title}_{i}", len(chunks)),
-                "text": f"{title}\n\n{piece}" if i == 0 else piece,
-                "title": title,
-                "source": str(path),
-            })
-        logger.info("  %s → %d chunks", path.name, len(pieces))
+        suffix = path.suffix.lower()
+        if suffix == ".jsonl":
+            n = _process_jsonl_file(path, chunks, chunk_size, chunk_overlap)
+        else:
+            n = _process_text_file(path, chunks, chunk_size, chunk_overlap)
+        logger.info("  %s → %d chunks", path.name, n)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
@@ -119,9 +177,10 @@ def prepare_corpus(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Chunk raw documents (.txt/.md/.pdf) into a DKA corpus JSONL."
+        description="Chunk a folder of .txt/.md/.jsonl documents into a DKA corpus JSONL."
     )
-    parser.add_argument("--input", required=True, help="Input file or directory")
+    parser.add_argument("--input", required=True,
+                        help="Input file or directory (mixed .txt / .md / .jsonl supported)")
     parser.add_argument("--output", required=True, help="Output chunks JSONL path")
     parser.add_argument("--chunk-size", type=int, default=512, help="Words per chunk")
     parser.add_argument("--chunk-overlap", type=int, default=64, help="Overlap in words")

@@ -21,7 +21,7 @@ cp examples/config.yaml config.yaml
 ## 3. Run the pipeline
 
 ```bash
-# docs -> chunks
+# docs -> chunks (a folder mixing .txt / .md / .jsonl; convert PDFs to md/txt first)
 dka-prepare --input examples/docs --output data/chunks.jsonl --chunk-size 256
 
 # chunks -> knowledge graph (JSON)

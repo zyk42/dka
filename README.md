@@ -16,7 +16,7 @@
 ## Pipeline Overview
 
 ```
-raw docs (.txt/.md/.pdf)
+raw docs (.txt/.md/.jsonl)
       │  dka-prepare
       ▼
 chunks.jsonl ────────────────┐
@@ -43,7 +43,6 @@ pip install -e .            # core pipeline
 pip install -e ".[ui]"      # + Gradio web UI
 pip install -e ".[train]"   # + two-stage training (TRL / PEFT / wandb)
 pip install -e ".[neo4j]"   # + Neo4j export
-pip install -e ".[pdf]"     # + PDF input for dka-prepare
 ```
 
 You also need an OpenAI-compatible LLM endpoint for extraction and QA synthesis
@@ -84,7 +83,7 @@ Every UI step maps 1:1 to a CLI command — see Quick Start below.
 ```bash
 cp config.example.yaml config.yaml   # point llm.base_url / llm.model at your endpoint
 
-# 0. Chunk your corpus (a folder of .txt/.md/.pdf)
+# 0. Chunk your corpus (a folder mixing .txt / .md / .jsonl)
 dka-prepare --input docs/ --output data/chunks.jsonl
 
 # 1. Build the knowledge graph (resumable, checkpointed)
@@ -109,6 +108,17 @@ torchrun --nproc_per_node=2 -m dka.cli.train \
     --stage 2 --model_path models/dka_s1 \
     --data_path data/qa_inter.jsonl --output_dir models/dka_s2
 ```
+
+## Corpus Input Formats
+
+`dka-prepare` accepts a single file or a folder (scanned recursively) mixing:
+
+| Format | Handling |
+|---|---|
+| `.txt` / `.md` | Whole document split into ~`chunk_size`-word chunks with overlap |
+| `.jsonl` | One corpus record per line; text read from the first available of `text` / `content` / `paragraph` / `paragraph_text` / `body`; `id` and `title` keys are reused; overlong records are further split |
+
+PDF is **not** supported — convert documents to Markdown or plain text first.
 
 ## Knowledge Graph Formats
 

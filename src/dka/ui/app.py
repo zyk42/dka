@@ -427,7 +427,8 @@ def create_app() -> gr.Blocks:
             with gr.Tab("① 语料准备 Corpus"):
                 with gr.Row():
                     with gr.Column(scale=2):
-                        gr.Markdown("#### 输入\n上传 `.txt / .md / .pdf` 文件,或填写服务器上的目录路径。")
+                        gr.Markdown("#### 输入\n上传 `.txt / .md / .jsonl` 文件,或填写服务器上的目录路径(支持混合,自动处理)。\n"
+                                    "`.jsonl` 每行一条语料记录(读取 text/content/paragraph 字段);PDF 请先自行转换为 md/txt。")
                         prep_files = gr.File(label="上传文档", file_count="multiple",
                                              file_types=list(SUPPORTED_SUFFIXES))
                         prep_dir = gr.Textbox(label="或服务器目录", placeholder="/path/to/docs/")

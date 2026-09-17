@@ -12,9 +12,6 @@ numpy>=1.24
 # Optional: Gradio web UI
 # gradio>=4.0
 
-# Optional: PDF input for dka-prepare
-# pypdf>=4.0
-
 # Training (dka-train)
 # torch>=2.1
 # transformers>=4.45
