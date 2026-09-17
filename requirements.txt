@@ -9,9 +9,6 @@ numpy>=1.24
 # Optional: Neo4j export
 # neo4j>=5.0
 
-# Optional: Gradio web UI
-# gradio>=4.0
-
 # Training (dka-train)
 # torch>=2.1
 # transformers>=4.45

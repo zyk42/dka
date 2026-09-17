@@ -3,7 +3,6 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![TRL](https://img.shields.io/badge/training-TRL-orange.svg)](https://github.com/huggingface/trl)
-[![Gradio](https://img.shields.io/badge/UI-Gradio-yellow.svg)](https://gradio.app/)
 
 **Domain Knowledge Annealing (DKA)** is a framework for building domain-expert LLMs from an unstructured corpus. Instead of treating training data as an unstructured collection, DKA organizes learning as a *"Local-to-Global"* annealing process:
 
@@ -40,7 +39,6 @@ domain-expert LLM
 ```bash
 git clone https://github.com/zyk42/dka.git && cd dka
 pip install -e .            # core pipeline
-pip install -e ".[ui]"      # + Gradio web UI
 pip install -e ".[train]"   # + two-stage training (TRL / PEFT / wandb)
 pip install -e ".[neo4j]"   # + Neo4j export
 ```
@@ -51,32 +49,6 @@ You also need an OpenAI-compatible LLM endpoint for extraction and QA synthesis
 ```bash
 python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen2.5-32B-Instruct --port 8000
 ```
-
-## Two Ways to Run
-
-### A. Web UI (Gradio)
-
-```bash
-dka-ui                       # http://127.0.0.1:7860
-dka-ui --host 0.0.0.0 --port 8000
-dka-ui --share               # public *.gradio.live link
-```
-
-The UI walks you through the whole pipeline in five tabs:
-**Corpus → Knowledge Graph (+ Neo4j export) → Random Walk → QA Synthesis → Training**.
-
-The **LLM Endpoint Settings** panel at the top is shared by KG construction and
-QA synthesis — just fill in the **Base URL** and **API Key** of any
-OpenAI-compatible endpoint. For a locally deployed model (vLLM / Ollama /
-SGLang), use its local URL (e.g. `http://localhost:8000/v1`) with any non-empty
-key (e.g. `dummy`).
-
-The Training tab generates the exact `torchrun` command (so you can copy it to
-a terminal) and can also launch training directly with live log streaming.
-
-### B. Command Line
-
-Every UI step maps 1:1 to a CLI command — see Quick Start below.
 
 ## Quick Start
 
@@ -171,15 +143,13 @@ dka/
 │   ├── neo4j_exporter.py     # graph → Neo4j import
 │   ├── walker.py             # rare-node-guided weighted random walk
 │   ├── qa_generator.py       # intra / inter QA synthesis + PASS/FAIL validation
-│   ├── cli/
+│   └── cli/
 │   │   ├── prepare_corpus.py # dka-prepare: docs → chunks.jsonl
 │   │   ├── build_kg.py       # dka-build-kg: chunks → knowledge_graph.json
 │   │   ├── export_neo4j.py   # dka-export-neo4j: graph JSON → Neo4j
 │   │   ├── walk.py           # dka-walk: graph → walks.jsonl
 │   │   ├── gen_qa.py         # dka-gen-qa: walks/chunks → QA JSONL (resumable)
 │   │   └── train.py          # dka-train: two-stage TRL SFT
-│   └── ui/
-│       └── app.py            # dka-ui: Gradio web UI for the full pipeline
 ├── config.example.yaml
 ├── examples/
 └── pyproject.toml
