@@ -200,10 +200,10 @@ async def _run(args: argparse.Namespace, cfg: dict) -> None:
     output_cfg = cfg.get("output", {})
 
     client = AsyncOpenAI(
-        base_url=llm_cfg.get("base_url", "http://localhost:8000/v1"),
-        api_key=os.environ.get("OPENAI_API_KEY", llm_cfg.get("api_key", "dummy")),
+        base_url=args.base_url or llm_cfg.get("base_url", "http://localhost:8000/v1"),
+        api_key=args.api_key or os.environ.get("OPENAI_API_KEY", llm_cfg.get("api_key", "dummy")),
     )
-    model            = llm_cfg.get("model", "")
+    model            = args.model or llm_cfg.get("model", "")
     concurrency      = llm_cfg.get("concurrent_requests", 8)
     sft_cfg = cfg.get("sft", {})
     checkpoint_every = args.checkpoint_every or sft_cfg.get("checkpoint_every", 500)
@@ -274,6 +274,10 @@ def main() -> None:
     parser.add_argument("--checkpoint-every", type=int, default=None,
                         help="Save after every N walks/chunks (default: 500)")
     parser.add_argument("--inter-output",  default=None, help="Override output path for inter-chunk JSONL")
+    # LLM endpoint overrides (priority: CLI > OPENAI_API_KEY env > config.yaml)
+    parser.add_argument("--base-url",      default=None, help="OpenAI-compatible endpoint URL (overrides config llm.base_url)")
+    parser.add_argument("--api-key",       default=None, help="API key (overrides OPENAI_API_KEY env and config llm.api_key)")
+    parser.add_argument("--model",         default=None, help="Model name (overrides config llm.model)")
     parser.add_argument("--intra-output",  default=None, help="Override output path for intra-chunk JSONL")
     args = parser.parse_args()
 

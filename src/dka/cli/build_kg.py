@@ -61,9 +61,9 @@ async def _run(args: argparse.Namespace, cfg: dict) -> None:
     graph_cfg = cfg.get("graph", {})
     output_cfg = cfg.get("output", {})
 
-    api_key = os.environ.get("OPENAI_API_KEY", llm_cfg.get("api_key", "dummy"))
+    api_key = args.api_key or os.environ.get("OPENAI_API_KEY", llm_cfg.get("api_key", "dummy"))
     client = AsyncOpenAI(
-        base_url=llm_cfg.get("base_url", "http://localhost:8000/v1"),
+        base_url=args.base_url or llm_cfg.get("base_url", "http://localhost:8000/v1"),
         api_key=api_key,
     )
     # Extra endpoints for load balancing (e.g. second GPU on port 8001)
@@ -113,7 +113,7 @@ async def _run(args: argparse.Namespace, cfg: dict) -> None:
             return
 
     batch_size = args.checkpoint_every or llm_cfg.get("checkpoint_every", 1000)
-    model      = llm_cfg.get("model", "Qwen/Qwen2.5-7B-Instruct")
+    model      = args.model or llm_cfg.get("model", "Qwen/Qwen2.5-7B-Instruct")
     max_tokens = llm_cfg.get("max_tokens", 4096)
     temperature= llm_cfg.get("temperature", 0.0)
     concurrency= llm_cfg.get("concurrent_requests", 8)
@@ -177,6 +177,10 @@ def main() -> None:
     parser.add_argument("--merge",             action="store_true",     help="Incremental: load existing graph and skip already-processed chunks")
     parser.add_argument("--checkpoint-every",  type=int, default=None,  help="Save graph every N chunks (default: 1000)")
     parser.add_argument("--extra-urls",        nargs="*", default=None, help="Extra vLLM base URLs for load balancing")
+    # LLM endpoint overrides (priority: CLI > OPENAI_API_KEY env > config.yaml)
+    parser.add_argument("--base-url",          default=None,            help="OpenAI-compatible endpoint URL (overrides config llm.base_url)")
+    parser.add_argument("--api-key",           default=None,            help="API key (overrides OPENAI_API_KEY env and config llm.api_key)")
+    parser.add_argument("--model",             default=None,            help="Model name (overrides config llm.model)")
     args = parser.parse_args()
 
     cfg = _load_config(args.config)

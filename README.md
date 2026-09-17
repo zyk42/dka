@@ -81,6 +81,21 @@ torchrun --nproc_per_node=2 -m dka.cli.train \
     --data_path data/qa_inter.jsonl --output_dir models/dka_s2
 ```
 
+### LLM endpoint configuration
+
+`dka-build-kg` and `dka-gen-qa` accept the LLM endpoint from three sources
+(priority: **CLI flag > env var > config.yaml**):
+
+```bash
+dka-build-kg --input data/chunks.jsonl \
+    --base-url http://localhost:8000/v1 \   # any OpenAI-compatible endpoint
+    --api-key dummy \                        # local vLLM: any non-empty key
+    --model Qwen/Qwen2.5-32B-Instruct
+# or via env:  export OPENAI_API_KEY=sk-...
+```
+
+With all three flags provided, `--config` can be omitted entirely.
+
 ## Corpus Input Formats
 
 `dka-prepare` accepts a single file or a folder (scanned recursively) mixing:
