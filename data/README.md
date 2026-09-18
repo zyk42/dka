@@ -2,16 +2,32 @@
 
 本目录存放 DKA 项目的数据（**不入 git**,`.gitignore` 已排除，`data/README.md` 除外）。
 
-## 已有数据（linguistic 领域，论文主实验）
+## Linguistic 语言学数据（论文主实验）
+
+完整语言学语料已上传到 ModelScope：
+
+**https://www.modelscope.cn/datasets/vivalavida21k/linguistic_data**
+
+该数据集包含原始语料与补充语料，合计 **31,954 条**（原语料 6,145 条 + 补充语料 25,809 条）。
 
 ```
 data/
 └── linguistic/
-    ├── corpus/linguistic.jsonl        # 语料:6,145 条,{"text": ...},可直接作为 dka-build-kg --input
+    ├── corpus/linguistic.jsonl        # 本地语料:6,145 条,{"text": ...}
     ├── sft/step1_sft.jsonl            # Stage 1 训练数据:100,000 条,{"prompt", "response"}
     ├── sft/step2_sft.jsonl            # Stage 2 训练数据:44,006 条,{"prompt", "response"}
     └── benchmark.jsonl                # 评测集:1,801 条,{"question", "ground_truth", "type", "difficulty"}
 ```
+
+从 ModelScope 下载：
+
+```bash
+pip install modelscope
+modelscope download --dataset vivalavida21k/linguistic_data \\
+    --local_dir data/linguistic_modelscope
+```
+
+下载后可将语料 JSONL 作为 `dka-build-kg --input` 的输入。
 
 ## 其他数据集（请自行下载后放入本目录）
 
