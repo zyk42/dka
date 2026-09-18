@@ -1,19 +1,21 @@
-# DKA 数据集说明
+# DKA Datasets
 
-本目录存放 DKA 项目的语料数据（**不入 git**，`.gitignore` 已排除，`data/README.md` 除外）。
+This directory contains corpus data for the DKA project. The data files are
+excluded from Git by `.gitignore`; this README is tracked separately.
 
-## Linguistic 语言学语料
+## Linguistic Corpus
 
-完整语言学语料已上传到 ModelScope：
+The complete linguistic corpus is available on ModelScope:
 
 **https://www.modelscope.cn/datasets/vivalavida21k/linguistic_data**
 
-该数据集只包含语言学语料，合计 **31,954 条**：
+The dataset contains only linguistic-domain corpus data, with **31,954 records**
+in total:
 
-- 原始语料：6,145 条
-- 补充语料：25,809 条
+- Original corpus: 6,145 records
+- Supplementary corpus: 25,809 records
 
-从 ModelScope 下载：
+Download it with:
 
 ```bash
 pip install modelscope
@@ -22,25 +24,27 @@ modelscope download \
     --local_dir data/linguistic_modelscope
 ```
 
-下载后可直接将其中的 `linguistic_merged.jsonl` 作为 `dka-build-kg --input` 的输入。该 JSONL 每行是一条语料记录，包含 `text`、`score`、`linguistics_score` 字段。
+The downloaded `linguistic_merged.jsonl` can be passed directly to
+`dka-build-kg --input`. Each JSONL record contains `text`, `score`, and
+`linguistics_score` fields.
 
-本地项目中保留的语料：
+The local project corpus is stored at:
 
 ```text
 data/linguistic/corpus/linguistic.jsonl
 ```
 
-## 其他数据集（请自行下载）
+## Other Datasets
 
-### Law 法律领域（ModelScope）
+### Law Datasets (ModelScope)
 
-| 数据集 | 链接 | 说明 |
+| Dataset | Link | Description |
 |---|---|---|
-| Legal | https://www.modelscope.cn/datasets/peopletech/Legal | 法律领域语料库 |
-| wenshu_dataset | https://www.modelscope.cn/datasets/KLGR123/wenshu_dataset | 裁判文书 JSON |
-| Chinese_Law | https://www.modelscope.cn/datasets/KuugoRen/Chinese_Law | 中国法律条文 txt |
+| Legal | https://www.modelscope.cn/datasets/peopletech/Legal | Legal-domain corpus |
+| wenshu_dataset | https://www.modelscope.cn/datasets/KLGR123/wenshu_dataset | Chinese court judgment JSON data |
+| Chinese_Law | https://www.modelscope.cn/datasets/KuugoRen/Chinese_Law | Chinese legal text files |
 
-下载方式：
+Download commands:
 
 ```bash
 pip install modelscope
@@ -49,10 +53,8 @@ modelscope download --dataset KLGR123/wenshu_dataset --local_dir data/law/wenshu
 modelscope download --dataset KuugoRen/Chinese_Law --local_dir data/law/Chinese_Law
 ```
 
-### MuSiQue（多跳 QA 基准）
+### MuSiQue (Multi-hop QA Benchmark)
 
-官方仓库与下载地址：
+Official repository and download page:
 
 https://github.com/StonyBrookNLP/musique
-
-MuSiQue 数据下载后可放置到 `data/musique/`。官方 test 集不公开答案，评估建议使用带答案的 dev 集。
