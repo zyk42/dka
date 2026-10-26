@@ -6,11 +6,11 @@
 
 **Domain Knowledge Annealing (DKA)** is a framework for building domain-expert LLMs from an unstructured corpus. Instead of treating training data as an unstructured collection, DKA organizes learning as a *"Local-to-Global"* annealing process:
 
+![DKA Framework Overview](figure/dka_01.png)
+
 1. **Domain knowledge graph construction with provenance tracking** — LLM-based entity/relation extraction over corpus chunks; every node and edge remembers which chunks it came from.
 2. **KG-guided QA synthesis** — rare-node-guided weighted random walks over the graph produce cross-document reasoning paths, which are turned into multi-hop QA pairs (with an LLM self-validation pass); single-chunk QA pairs are synthesized directly from the corpus.
 3. **Two-stage progressive training** — Stage 1 injects local (intra-document) knowledge; Stage 2 anneals the model on global (inter-document, multi-hop) reasoning. Both stages run on [TRL](https://github.com/huggingface/trl)'s `SFTTrainer`.
-
-> Paper: *Domain Knowledge Annealing: A Structured Local-to-Global Paradigm for Constructing Expert LLMs*
 
 ## Pipeline Overview
 
@@ -175,19 +175,6 @@ dka/
 - Entity/relation extraction is adapted from [Microsoft GraphRAG](https://github.com/microsoft/graphrag) (MIT).
 - Training is built on [TRL](https://github.com/huggingface/trl), [PEFT](https://github.com/huggingface/peft) and [Transformers](https://github.com/huggingface/transformers).
 - The Neo4j import design (label-per-type + `MERGE` by name) follows common community practice.
-
-## Citation
-
-If you find DKA useful in your research, please cite:
-
-```bibtex
-@article{dka2026,
-  title  = {Domain Knowledge Annealing: A Structured Local-to-Global Paradigm for Constructing Expert LLMs},
-  author = {DKA Authors},
-  year   = {2026},
-  note   = {arXiv preprint}
-}
-```
 
 ## License
 
