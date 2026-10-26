@@ -5,9 +5,10 @@ excluded from Git by `.gitignore`; this README is tracked separately.
 
 ## Linguistic Corpus
 
-The complete linguistic corpus is available on ModelScope:
+The complete linguistic corpus is available on both ModelScope and Hugging Face:
 
-**https://www.modelscope.cn/datasets/vivalavida21k/linguistic_data**
+- **ModelScope**: https://www.modelscope.cn/datasets/vivalavida21k/linguistic_data
+- **Hugging Face**: https://huggingface.co/datasets/MYTH-Lab/linguistic-dataset
 
 The dataset contains only linguistic-domain corpus data, with **31,954 records**
 in total:
@@ -18,10 +19,16 @@ in total:
 Download it with:
 
 ```bash
+# Option A: ModelScope
 pip install modelscope
 modelscope download \
     --dataset vivalavida21k/linguistic_data \
     --local_dir data/linguistic_modelscope
+
+# Option B: Hugging Face
+pip install huggingface_hub
+huggingface-cli download MYTH-Lab/linguistic-dataset \
+    --repo-type dataset --local-dir data/linguistic_hf
 ```
 
 The downloaded `linguistic_merged.jsonl` can be passed directly to
